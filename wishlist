@@ -1,0 +1,4 @@
+-permute otp every time, delete previous 
+-somehow clear it from memory - look into how to mmap and clear physical memory
+-secure entry
+-framebuffer? how secure is the framebuffer?
