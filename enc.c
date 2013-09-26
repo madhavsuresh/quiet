@@ -6,6 +6,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <openssl/sha.h>
 #include "enc.h"
 
 char * RAND_PATH = "./rand";
@@ -65,6 +66,23 @@ packet_t * get_rand_pak(int len){
     write_header(f,pos);
     close(f);
     return pak;
+}
+
+int ckcksum(packet_t * pak){
+
+    unsigned char digest[SHA_DIGEST_LENGTH];
+    SHA1(pak->buf,pak->len-1,digest);
+    if(strncmp(pak->digest,digest,SHA_DIGEST_LENGTH) != 0){
+	    printf("error in transit");
+	    return 1;
+    }
+    printf("success!!!");
+    return 0;
+
+}
+void chksm_packet(packet_t * pak){
+
+    SHA1(pak->buf,pak->len-1,pak->digest);
 }
 
 void destroy_packet(packet_t * pak){

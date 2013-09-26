@@ -86,6 +86,7 @@ int main(){
 
     for(;;){
         nfds = epoll_wait(epollfd,events,BACKLOG,-1);
+	printf("wat");
         if(nfds == -1){
             perror("epoll_wait");
             exit(EXIT_FAILURE);
@@ -112,11 +113,14 @@ int main(){
 
             }else{
 
-		    //recieving from connection
+		packet_t * pr;
+		//recieving from connection
 		rlen = recv(events[n].data.fd,recv_buf,MAX_LEN,0);
-		packet_t * p = enc_msg(recv_buf,rlen);
+		pr = (packet_t *)recv_buf;
+		ckcksum(pr);
+		packet_t * p = enc_msg(pr->buf,pr->len);
 		//#printf("ENCRYPTED MESSAGE %s",p->buf);
-		printf("%s",p->buf);
+		//printf("%s",p->buf);
 
 		//printf("unhandled");
 		//exit(EXIT_FAILURE);

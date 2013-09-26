@@ -53,11 +53,13 @@ int main(int argc, char ** argv){
     freeaddrinfo(result);
 
     while( 1 ) {
+
 	fgets(buf,MAX_LEN,stdin);
 	x = strlen(buf);
 
 	p = enc_msg(buf,x);
-	send(sfd,p->buf,p->len,0);
+	chksm_packet(p);
+	send(sfd,p,sizeof(packet_t) + p->len,0);
 
 	destroy_packet(p);
     }
