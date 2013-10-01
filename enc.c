@@ -76,7 +76,6 @@ int ckcksum(packet_t * pak){
 	    printf("error in transit");
 	    return 1;
     }
-    printf("success!!!");
     return 0;
 
 }
@@ -89,6 +88,7 @@ void destroy_packet(packet_t * pak){
     free(pak);
 }
 
+//this seems kinda dumb
 packet_t * enc_msg(char * msg, int len){
     packet_t * p = make_packet(msg,len);
     packet_t * r = get_rand_pak(len);

@@ -86,7 +86,6 @@ int main(){
 
     for(;;){
         nfds = epoll_wait(epollfd,events,BACKLOG,-1);
-	printf("wat");
         if(nfds == -1){
             perror("epoll_wait");
             exit(EXIT_FAILURE);
@@ -105,9 +104,9 @@ int main(){
 		ev.events = EPOLLIN;
 		ev.data.fd = conn_sock;
 		epoll_ctl(epollfd,EPOLL_CTL_ADD,conn_sock,&ev);
-		printf("got con");
 		
 		challenge_auth();
+		epoll_ctl
 		
 
 
@@ -116,14 +115,22 @@ int main(){
 		packet_t * pr;
 		//recieving from connection
 		rlen = recv(events[n].data.fd,recv_buf,MAX_LEN,0);
+
+		if( rlen == 0 ) {
+
+			close(events[n].data.fd);
+			continue;
+		}
+
 		pr = (packet_t *)recv_buf;
 		ckcksum(pr);
 		packet_t * p = enc_msg(pr->buf,pr->len);
-		//#printf("ENCRYPTED MESSAGE %s",p->buf);
-		//printf("%s",p->buf);
+		printf("%.*s",p->len,p->buf);
+		//write(stdout,p->buf,p->len);
+		destroy_packet(p);
+		bzero(recv_buf,MAX_LEN);
 
-		//printf("unhandled");
-		//exit(EXIT_FAILURE);
+
 
             }
         }
