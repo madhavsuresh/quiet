@@ -8,9 +8,9 @@ tst:
 	clang -c tst.c -o tst.o
 	clang tst.o enc.o $(LDFLAGS) -o tst
 time:
-	clang -c enc.c -o enc.o
-	clang -c time.c -o time.o
-	clang time.o enc.o $(LDFLAGS) -o time 
+	clang -g -c enc.c -o enc.o
+	clang -c -g time.c -o time.o
+	clang -g time.o enc.o $(LDFLAGS) -o time 
 clean:
 	rm -f time 
 	rm -f enc

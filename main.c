@@ -6,15 +6,18 @@
 #include <string.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <sys/epoll.h>
 
+static const int BACKLOG = 10;
 
 int main(int argc, char ** argv){
 
-    char * buf = malloc(MAX_LEN); 
+    char * recv_buf = malloc(MAX_LEN); 
     int x = 0;
-    int f,sfd,s;
+    int f,sfd,s,epollfd,n,nfds;
     struct addrinfo hints;
     struct addrinfo *result,*rp;
+    struct epoll_event events[BACKLOG];
     packet_t * p;
     RAND_PATH = argv[1];
 
@@ -52,6 +55,58 @@ int main(int argc, char ** argv){
 
     freeaddrinfo(result);
 
+    epollfd = setup_epoll();
+    add_epollin(epollfd,sfd);
+    add_epollin(epollfd,0);
+
+    for(;;){
+	    int rlen;
+	    nfds = epoll_wait(epollfd,events,BACKLOG,-1);
+	    if(nfds == -1){
+		perror("epoll_wait");
+		exit(EXIT_FAILURE);
+	    }
+	for( n = 0;n<nfds;++n){
+		if(events[n].data.fd == sfd){
+			//recv data
+				packet_t * pr;
+				//recieving from connection
+				rlen = recv(events[n].data.fd,recv_buf,MAX_LEN,0);
+
+				if( rlen == 0 ) {
+
+					close(events[n].data.fd);
+					continue;
+				}
+
+				pr = (packet_t *)recv_buf;
+				ckcksum(pr);
+				packet_t * p = enc_msg(pr->buf,pr->len);
+				printf("%.*s",p->len,p->buf);
+				fflush(0);
+				//write(stdout,p->buf,p->len);
+				destroy_packet(p);
+				bzero(recv_buf,MAX_LEN);
+
+		}else if(events[n].data.fd == 0){
+			packet_t * p;
+
+			rlen = read(0,recv_buf,MAX_LEN);
+			p = enc_msg(recv_buf,rlen);
+			chksm_packet(p);
+			
+			if (send(sfd,p,sizeof(packet_t) + rlen,0) < 0){
+				perror("send error!");
+
+			}
+			destroy_packet(p);
+
+		}
+	}
+
+    }
+
+    /*
     while( 1 ) {
 
 	fgets(buf,MAX_LEN,stdin);
@@ -63,7 +118,7 @@ int main(int argc, char ** argv){
 
 	destroy_packet(p);
     }
-    free(buf);
+    */
     close(sfd);
 
 }

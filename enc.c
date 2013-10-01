@@ -7,10 +7,34 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <openssl/sha.h>
+#include <sys/epoll.h>
 #include "enc.h"
 
 char * RAND_PATH = "./rand";
 
+int setup_epoll(){
+
+	int epollfd;
+	if( (epollfd = epoll_create1(0)) == -1){
+		perror("epoll_create1");
+		exit(EXIT_FAILURE);
+	}
+	return epollfd;
+}
+
+void add_epollin(int epollfd,int fd){
+
+	struct epoll_event ev;
+
+	ev.events = EPOLLIN;
+	ev.data.fd = fd;
+
+	if( epoll_ctl(epollfd,EPOLL_CTL_ADD,fd,&ev) == -1){
+		perror("epoll_ctl");
+		exit(EXIT_FAILURE);
+	}
+
+}
 
 void enc_packet(packet_t * pak, packet_t * rand){
 
