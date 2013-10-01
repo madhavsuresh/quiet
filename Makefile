@@ -1,16 +1,17 @@
 LDFLAGS=-lcrypto
+CC=clang
 all:
-	clang -c enc.c  -o  enc.o
-	clang -c main.c -o main.o
-	clang enc.o main.o $(LDFLAGS) -o enc
+	$(CC) -c enc.c  -o  enc.o
+	$(CC) -c main.c -o main.o
+	$(CC) enc.o main.o $(LDFLAGS) -o enc
 tst:
-	clang -c enc.c -o enc.o
-	clang -c tst.c -o tst.o
-	clang tst.o enc.o $(LDFLAGS) -o tst
+	$(CC) -c enc.c -o enc.o
+	$(CC) -c tst.c -o tst.o
+	$(CC) tst.o enc.o $(LDFLAGS) -o tst
 time:
-	clang -g -c enc.c -o enc.o
-	clang -c -g time.c -o time.o
-	clang -g time.o enc.o $(LDFLAGS) -o time 
+	$(CC) -g -c enc.c -o enc.o
+	$(CC) -c -g time.c -o time.o
+	$(CC) -g time.o enc.o $(LDFLAGS) -o time 
 clean:
 	rm -f time 
 	rm -f enc
