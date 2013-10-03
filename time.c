@@ -9,6 +9,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <sys/epoll.h>
+#include <unistd.h>
 #include "enc.h"
 
 const char * const x[] = {"Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"};
@@ -66,10 +67,10 @@ int main(){
 
 	RAND_PATH = "rand.1";
 	int listen_sock,conn_sock,epollfd,nfds,n;
-	char * recv_buf = malloc(MAX_LEN);
+	unsigned char * recv_buf = malloc(MAX_LEN);
 	struct sockaddr_in * s;
 	struct epoll_event ev, events[BACKLOG];
-	int addrlen = sizeof(struct sockaddr *);
+	socklen_t addrlen = sizeof(struct sockaddr *);
 	size_t rlen;
 	conn_sock = -1;
 
@@ -95,7 +96,7 @@ int main(){
 				if(conn_sock != -1)
 					continue;
 
-				conn_sock = accept4(listen_sock,s,&addrlen,0);
+				conn_sock = accept(listen_sock,(struct sockaddr *)s,&addrlen);
 
 				if(conn_sock == -1){
 					perror("accept");
@@ -118,28 +119,12 @@ int main(){
 
 			}else{
 
-				packet_t * pr;
-				//recieving from connection
-				rlen = recv(events[n].data.fd,recv_buf,MAX_LEN,0);
+				packet_t * p = get_message(events[n].data.fd,recv_buf);
 
-				if( rlen == 0 ) {
-
-					conn_sock = -1;
-					close(events[n].data.fd);
-					continue;
+				if( p != NULL){
+					print_out_message(p);
+					bzero(recv_buf,MAX_LEN);
 				}
-
-				pr = (packet_t *)recv_buf;
-				ckcksum(pr);
-				packet_t * p = enc_msg(pr->buf,pr->len);
-				printf("%.*s",p->len,p->buf);
-				fflush(0);
-				//write(stdout,p->buf,p->len);
-				destroy_packet(p);
-				bzero(recv_buf,MAX_LEN);
-
-
-
 			}
 		}
 	}

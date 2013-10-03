@@ -8,9 +8,39 @@
 #include <unistd.h>
 #include <openssl/sha.h>
 #include <sys/epoll.h>
+#include <sys/types.h>
+#include <sys/socket.h>
 #include "enc.h"
 
+
 char * RAND_PATH = "./rand";
+
+void print_out_message(packet_t * p){
+
+	printf("%.*s",p->len,p->buf);
+	fflush(0);
+	destroy_packet(p);
+
+}
+packet_t * get_message(int fd, unsigned char * recv_buf){
+	int rlen;
+
+	packet_t * pr;
+	rlen = recv(fd,recv_buf,MAX_LEN,0);
+
+	if( rlen == 0 ) {
+
+		//conn_sock = -1;
+		close(fd);
+		return NULL;
+	}
+
+	pr = (packet_t *)recv_buf;
+	ckcksum(pr);
+	packet_t * p = enc_msg(pr->buf,pr->len);
+	return p;
+
+}
 
 int setup_epoll(){
 
@@ -49,11 +79,11 @@ void enc_packet(packet_t * pak, packet_t * rand){
 
 }
 
-packet_t * make_packet(char * input_buf,int len){
+packet_t * make_packet(unsigned char * input_buf,int len){
 
     packet_t * pak = malloc(sizeof(packet_t) + len + 1);
     pak->len = len;
-    strncpy(pak->buf,input_buf,len);
+    strncpy((char *)pak->buf,(char *)input_buf,len);
     return pak;
 }
 
@@ -81,7 +111,7 @@ packet_t * get_rand_pak(int len){
     int f = open(RAND_PATH,O_RDWR);
     int32_t pos = read_header(f);
     lseek(f,pos,SEEK_CUR);
-    packet_t * pak = make_packet("",len);
+    packet_t * pak = make_packet((unsigned char *)"",len);
     if( read(f,pak->buf,len) != len){
         perror("unable to read bytes from rand");
         exit(0);
@@ -96,7 +126,7 @@ int ckcksum(packet_t * pak){
 
     unsigned char digest[SHA_DIGEST_LENGTH];
     SHA1(pak->buf,pak->len-1,digest);
-    if(strncmp(pak->digest,digest,SHA_DIGEST_LENGTH) != 0){
+    if(strncmp((char *)pak->digest,(char*)digest,SHA_DIGEST_LENGTH) != 0){
 	    printf("error in transit");
 	    return 1;
     }
@@ -113,7 +143,7 @@ void destroy_packet(packet_t * pak){
 }
 
 //this seems kinda dumb
-packet_t * enc_msg(char * msg, int len){
+packet_t * enc_msg(unsigned char * msg, int len){
     packet_t * p = make_packet(msg,len);
     packet_t * r = get_rand_pak(len);
     enc_packet(p,r);

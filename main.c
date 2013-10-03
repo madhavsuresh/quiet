@@ -12,7 +12,7 @@ static const int BACKLOG = 10;
 
 int main(int argc, char ** argv){
 
-    char * recv_buf = malloc(MAX_LEN); 
+    unsigned char * recv_buf = malloc(MAX_LEN); 
     int x = 0;
     int f,sfd,s,epollfd,n,nfds;
     struct addrinfo hints;
@@ -68,25 +68,13 @@ int main(int argc, char ** argv){
 	    }
 	for( n = 0;n<nfds;++n){
 		if(events[n].data.fd == sfd){
-			//recv data
-				packet_t * pr;
-				//recieving from connection
-				rlen = recv(events[n].data.fd,recv_buf,MAX_LEN,0);
 
-				if( rlen == 0 ) {
+				packet_t * p = get_message(events[n].data.fd,recv_buf);
 
-					close(events[n].data.fd);
-					continue;
+				if( p != NULL){
+					print_out_message(p);
+					bzero(recv_buf,MAX_LEN);
 				}
-
-				pr = (packet_t *)recv_buf;
-				ckcksum(pr);
-				packet_t * p = enc_msg(pr->buf,pr->len);
-				printf("%.*s",p->len,p->buf);
-				fflush(0);
-				//write(stdout,p->buf,p->len);
-				destroy_packet(p);
-				bzero(recv_buf,MAX_LEN);
 
 		}else if(events[n].data.fd == 0){
 			packet_t * p;
